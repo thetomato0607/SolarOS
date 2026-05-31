@@ -12,9 +12,11 @@ __pycache__/
 dist/
 build/
 
+# Data
+/data/
+
 # Jupyter
 .ipynb_checkpoints/
-notebooks/
 
 # VS Code
 .vscode/
