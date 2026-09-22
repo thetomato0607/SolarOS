@@ -1,7 +1,18 @@
 # Hybrid Solar Generation Forecasting & Battery Dispatch Optimization
  
 A physics-first, ML-corrected forecasting pipeline for residential solar generation, extended into probabilistic (quantile) forecasts and a linear-programming battery dispatch optimizer. Built and validated end-to-end on real smart-meter data from the Pecan Street Dataport.
- 
+
+![Physics baseline vs actual generation](assets/physics_vs_actual.png)
+
+## Quickstart
+
+```bash
+pip install -r requirements.txt
+tar xzf 15minute_data_austin.tar.gz -C data/
+```
+
+Then open and run the notebooks in order, `notebooks/01_data_pipeline.ipynb` through `notebooks/05_battery_dispatch.ipynb`. `01_data_pipeline.ipynb` expects the extracted CSV at `data/15minute_data_austin/15minute_data_austin.csv` (relative to the repo root; the notebook itself resolves it as `../data/15minute_data_austin/15minute_data_austin.csv` from inside `notebooks/`).
+
 ## Overview
  
 This project answers a practical question: **given a home with solar panels and a battery, how should the battery charge and discharge to minimize electricity cost, using only a forecast of tomorrow's generation and load?**
@@ -14,7 +25,7 @@ The system is built in five stages, each in its own notebook, connected by a sha
 | `02_physics_baseline.ipynb` | Physics model | PV generation forecast from first principles (pvlib) |
 | `03_ml_residual_model.ipynb` | ML correction | LightGBM model on physics residuals |
 | `04_quantile_forecast.ipynb` | Uncertainty | 5-quantile probabilistic generation forecast |
-| `05_battery_optimizer.ipynb` | Decision layer | LP-based battery dispatch under uncertainty |
+| `05_battery_dispatch.ipynb` | Decision layer | LP-based battery dispatch under uncertainty |
  
 ## Data
  
@@ -43,10 +54,10 @@ Point forecasts hide risk. Five LightGBM quantile regressors (τ = 0.05, 0.25, 0
  
 **Result — reported honestly rather than optimistically:** calibration is materially off on the test period. The model learned a positive residual mean from Jan–Jul and over-applied it to Oct–Dec, a residual-space seasonal distribution shift. Conformal recalibration on an Aug–Sep validation slice was tested and found structurally unable to fix this, since the calibration slice precedes the seasonal break it would need to correct for. A gate check (PASS/FAIL per quantile) is built into the notebook. **q05 is the designated dispatch quantile**, with an empirically verified ~77% coverage floor — the one quantile whose calibration can be trusted enough to act on.
  
-### 4. Battery dispatch optimization (PuLP LP)
+### 4. Battery dispatch optimization (scipy.optimize.linprog LP)
 A rolling linear program dispatches the battery hour-by-hour against forecasted generation and load, under Austin's time-of-use tariff structure. During review, a double-counted discharge efficiency bug was found and fixed: discharge (`d_h`) is already AC-side delivered energy, so the correct grid balance is `net = load − gen − d_h + c_h` (efficiency `η_d` applies only once, on the SOC constraint, not again on the grid-balance row).
  
-**Result:** Dispatching on the conservative, verified q05 quantile captures ~60% of theoretical oracle savings ($3.12 of $5.18 over the Oct–Dec test quarter — Austin's flattest TOU period). A q25 sensitivity run captures more (~67%) but rests on a quantile whose calibration is not verified, so it's flagged as apparent edge with hidden risk rather than reported as the better result.
+**Result:** The only dispatch run actually executed in the notebook uses the q25 forecast as the LP's generation input. Over the Oct–Dec test quarter (Austin's flattest TOU period), it saves **$2.72** against a naive no-battery baseline ($103.17 → $100.44), which is **63%** of the **$4.34** theoretical maximum obtainable with a perfect-foresight Oracle dispatch ($103.17 → $98.83). q25's calibration is not fully verified for this period (see Known limitations), so this result should be read as a conservative, forecast-driven case rather than the calibration-verified ideal.
  
 ## Key engineering principles applied throughout
  
@@ -66,7 +77,7 @@ A rolling linear program dispatches the battery hour-by-hour against forecasted 
 2. **Acquire a second year of data**, if it becomes available, to build a calibration slice that spans the seasonal boundary the current one cannot.
 ## Stack
  
-Python · pvlib · LightGBM · PuLP · pandas · SQLite · Open-Meteo archive API · JupyterHub
+Python · pvlib · LightGBM · scipy.optimize.linprog (HiGHS) · pandas · SQLite · Open-Meteo archive API · JupyterHub
  
 ## Repository structure
  
@@ -78,7 +89,7 @@ Python · pvlib · LightGBM · PuLP · pandas · SQLite · Open-Meteo archive AP
 ├── 02_physics_baseline.ipynb
 ├── 03_ml_residual_model.ipynb
 ├── 04_quantile_forecast.ipynb
-├── 05_battery_optimizer.ipynb
+├── 05_battery_dispatch.ipynb
 ├── requirements.txt
 └── README.md
 ```
