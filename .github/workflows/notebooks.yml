@@ -1,0 +1,74 @@
+name: Notebooks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  execute-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # The notebooks embed a kernelspec named "solaros" (the maintainer's
+      # local dev kernel), which does not exist on a fresh runner. Register
+      # the CI environment under a known name and force nbconvert to use it
+      # below, instead of relying on the notebook's own kernel metadata.
+      - name: Register Jupyter kernel
+        run: python -m ipykernel install --user --name ci-python3 --display-name "CI Python 3"
+
+      - name: Extract dataset
+        run: |
+          mkdir -p data
+          tar xzf 15minute_data_austin.tar.gz -C data/
+          test -f data/15minute_data_austin/15minute_data_austin.csv
+
+      - name: Run 01_data_pipeline.ipynb
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/01_data_pipeline.ipynb \
+            --output /tmp/01_data_pipeline.out.ipynb \
+            --ExecutePreprocessor.kernel_name=ci-python3 \
+            --ExecutePreprocessor.timeout=1800
+
+      - name: Run 02_physics_baseline.ipynb
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/02_physics_baseline.ipynb \
+            --output /tmp/02_physics_baseline.out.ipynb \
+            --ExecutePreprocessor.kernel_name=ci-python3 \
+            --ExecutePreprocessor.timeout=1800
+
+      - name: Run 03_ml_residual_model.ipynb
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/03_ml_residual_model.ipynb \
+            --output /tmp/03_ml_residual_model.out.ipynb \
+            --ExecutePreprocessor.kernel_name=ci-python3 \
+            --ExecutePreprocessor.timeout=1800
+
+      - name: Run 04_quantile_forecast.ipynb
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/04_quantile_forecast.ipynb \
+            --output /tmp/04_quantile_forecast.out.ipynb \
+            --ExecutePreprocessor.kernel_name=ci-python3 \
+            --ExecutePreprocessor.timeout=1800
+
+      - name: Run 05_battery_dispatch.ipynb
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/05_battery_dispatch.ipynb \
+            --output /tmp/05_battery_dispatch.out.ipynb \
+            --ExecutePreprocessor.kernel_name=ci-python3 \
+            --ExecutePreprocessor.timeout=1800
