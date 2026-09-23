@@ -1,3 +1,5 @@
+# AI-assisted (Claude, bf87a5a): workflow written with Claude. Known issue: it fails at
+# "Install dependencies" because requirements.txt pins the Windows-only pywinpty.
 name: Notebooks
 
 on:

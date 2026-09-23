@@ -1,14 +1,21 @@
-"""Generates notebooks/05_battery_dispatch.ipynb."""
+"""Generates notebooks/05_battery_dispatch.ipynb.
+
+Out of date: the committed notebook was edited after generation (cells 4, 10 and 14
+differ). Re-running this overwrites it with the older text and drops all
+outputs, so treat the notebook, not this script, as the source of truth.
+"""
 import json
 from pathlib import Path
 
 
 def code_cell(cell_id, source):
+    """Return an nbformat-4 code cell with no outputs, so the notebook must be re-executed."""
     return {"cell_type": "code", "execution_count": None, "id": cell_id,
             "metadata": {}, "outputs": [], "source": source}
 
 
 def md_cell(cell_id, source):
+    """Return an nbformat-4 markdown cell."""
     return {"cell_type": "markdown", "id": cell_id, "metadata": {}, "source": source}
 
 
@@ -200,6 +207,7 @@ assert (q_adj.diff(axis=1).iloc[:, 1:] >= 0).all().all(), "Monotonicity failed a
 
 # ── Coverage comparison: before vs after ─────────────────────────────────────
 def coverage(actual, lower, upper):
+    \"\"\"Fraction of ``actual`` values inside the closed interval [lower, upper].\"\"\"
     return float(((actual >= lower) & (actual <= upper)).mean())
 
 cov_90_before = coverage(actual_test, q_test["q05"], q_test["q95"])

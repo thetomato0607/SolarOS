@@ -93,3 +93,12 @@ Python · pvlib · LightGBM · scipy.optimize.linprog (HiGHS) · pandas · SQLit
 ├── requirements.txt
 └── README.md
 ```
+
+## AI assistance
+
+Parts of this repository were written or changed with Claude, Anthropic's AI assistant. Affected code is marked in place with comments of the form `AI-assisted (Claude, <commit>)`; list them with `git grep -n "AI-assisted"`.
+
+- `36a70dd`: README corrections, unused packages removed from `requirements.txt`, LICENSE, README figure.
+- `bf87a5a`: `.github/workflows/notebooks.yml`.
+- The commit that added this section: docstrings and explanatory comments across the code.
+- Apart from those docstrings, no notebook code was written by Claude.

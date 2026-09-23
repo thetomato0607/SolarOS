@@ -1,9 +1,15 @@
-"""Generates notebooks/04_quantile_forecast.ipynb from source strings."""
+"""Generates notebooks/04_quantile_forecast.ipynb from source strings.
+
+Out of date: the committed notebook was edited after generation (cell 13
+differ). Re-running this overwrites it with the older text and drops all
+outputs, so treat the notebook, not this script, as the source of truth.
+"""
 import json
 from pathlib import Path
 
 
 def code_cell(cell_id, source):
+    """Return an nbformat-4 code cell with no outputs, so the notebook must be re-executed."""
     return {
         "cell_type": "code",
         "execution_count": None,
@@ -15,6 +21,7 @@ def code_cell(cell_id, source):
 
 
 def md_cell(cell_id, source):
+    """Return an nbformat-4 markdown cell."""
     return {
         "cell_type": "markdown",
         "id": cell_id,
@@ -298,6 +305,7 @@ of miscalibration.\
 cells.append(code_cell("b4000010", """\
 # ── Layer (a): Empirical coverage ────────────────────────────────────────────
 def empirical_coverage(actual, lower, upper):
+    \"\"\"Fraction of ``actual`` values inside the closed interval [lower, upper].\"\"\"
     return float(((actual >= lower) & (actual <= upper)).mean())
 
 cov_50 = empirical_coverage(actual_test, q_df["q25"], q_df["q75"])
@@ -311,6 +319,7 @@ print("(+ = over-covered / conservative,  - = under-covered / overconfident)")
 
 # ── Layer (b): Pinball loss ────────────────────────────────────────────────────
 def pinball_loss(actual, pred, q):
+    \"\"\"Mean pinball (quantile) loss of ``pred`` at level ``q``; lower is better.\"\"\"
     err = actual.values - pred.values
     return float(np.where(err >= 0, q * err, (q - 1) * err).mean())
 
