@@ -12,9 +12,15 @@ __pycache__/
 dist/
 build/
 
-# Data
-/data/
-*.tar.gz
+# Data: only the raw archive is tracked. Extracted CSVs and everything the
+# notebooks write to data/processed/ are regenerated.
+/data/*
+!/data/raw/
+/data/raw/*
+!/data/raw/15minute_data_austin.tar.gz
+
+# Test caches
+.pytest_cache/
 
 # Jupyter
 .ipynb_checkpoints/

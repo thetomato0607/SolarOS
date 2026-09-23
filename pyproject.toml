@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solaros"
+version = "0.1.0"
+description = "Shared pipeline code for the SolarOS solar-forecasting and battery-dispatch notebooks"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Frankie Lam", email = "yuilonlam0607@gmail.com" }]
+requires-python = ">=3.11"
+# Direct dependencies of the package; exact versions for the whole notebook
+# environment are pinned in requirements.txt.
+dependencies = ["numpy", "pandas", "pvlib", "lightgbm"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -2,16 +2,19 @@
  
 A physics-first, ML-corrected forecasting pipeline for residential solar generation, extended into probabilistic (quantile) forecasts and a linear-programming battery dispatch optimizer. Built and validated end-to-end on real smart-meter data from the Pecan Street Dataport.
 
-![Physics baseline vs actual generation](assets/physics_vs_actual.png)
+![Physics baseline vs actual generation](reports/figures/physics_vs_actual.png)
 
 ## Quickstart
 
+Requires Python 3.11. Weather for notebook 01 is fetched from the Open-Meteo archive API, so it needs internet access.
+
 ```bash
-pip install -r requirements.txt
-tar xzf 15minute_data_austin.tar.gz -C data/
+pip install -r requirements.txt                          # pinned environment + the local solaros package
+tar xzf data/raw/15minute_data_austin.tar.gz -C data/raw/
+pytest                                                   # unit tests for src/solaros
 ```
 
-Then open and run the notebooks in order, `notebooks/01_data_pipeline.ipynb` through `notebooks/05_battery_dispatch.ipynb`. `01_data_pipeline.ipynb` expects the extracted CSV at `data/15minute_data_austin/15minute_data_austin.csv` (relative to the repo root; the notebook itself resolves it as `../data/15minute_data_austin/15minute_data_austin.csv` from inside `notebooks/`).
+Then run the notebooks in order, `notebooks/01_data_pipeline.ipynb` through `notebooks/05_battery_dispatch.ipynb`, from inside `notebooks/`. Notebook 01 reads `data/raw/15minute_data_austin/15minute_data_austin.csv` and writes `data/processed/unified_2018_661.parquet`, which notebooks 02–05 read (02 adds the physics column). CI (`.github/workflows/notebooks.yml`) runs the unit tests and then all five notebooks in this order.
 
 ## Overview
  
@@ -80,17 +83,24 @@ A rolling linear program dispatches the battery hour-by-hour against forecasted 
 Python · pvlib · LightGBM · scipy.optimize.linprog (HiGHS) · pandas · SQLite · Open-Meteo archive API · JupyterHub
  
 ## Repository structure
- 
+
 ```
 ├── data/
-│   └── processed/
-│       └── unified_2018_661.parquet   # inter-notebook data contract
-├── 01_data_pipeline.ipynb
-├── 02_physics_baseline.ipynb
-├── 03_ml_residual_model.ipynb
-├── 04_quantile_forecast.ipynb
-├── 05_battery_dispatch.ipynb
-├── requirements.txt
+│   ├── raw/15minute_data_austin.tar.gz   # Pecan Street extract (tracked); extract in place
+│   └── processed/                        # notebook outputs (git-ignored), incl. the
+│                                         #   unified_2018_661.parquet data contract
+├── notebooks/                            # 01–05, run in order
+├── src/solaros/                          # code shared by the notebooks
+│   ├── constants.py                      # site coordinates, array geometry, capacity
+│   ├── features.py                       # residual-model feature matrix
+│   ├── splits.py                         # chronological train/val/test split
+│   ├── models.py                         # LightGBM settings, quantile ensemble
+│   └── metrics.py                        # RMSE, MAE, coverage, pinball loss
+├── tests/                                # pytest suite for src/solaros
+├── reports/figures/                      # figures used in this README
+├── .github/workflows/notebooks.yml       # CI: unit tests + all notebooks end to end
+├── pyproject.toml                        # solaros package metadata
+├── requirements.txt                      # pinned environment (installs solaros too)
 └── README.md
 ```
 
@@ -100,5 +110,5 @@ Parts of this repository were written or changed with Claude, Anthropic's AI ass
 
 - `36a70dd`: README corrections, unused packages removed from `requirements.txt`, LICENSE, README figure.
 - `bf87a5a`: `.github/workflows/notebooks.yml`.
-- The commit that added this section: docstrings and explanatory comments across the code.
-- Apart from those docstrings, no notebook code was written by Claude.
+- `ea0aebb`: docstrings and explanatory comments.
+- The commit after `ea0aebb`: repository reorganisation. Code duplicated across notebooks 01–05 moved into `src/solaros/` (with unit tests), stale notebook-generator scripts removed, data moved to `data/raw/`, `pywinpty` restricted to Windows so the environment installs on Linux/macOS, and CI and README updated. The pipeline logic and results are unchanged; see the commit message for how this was verified.

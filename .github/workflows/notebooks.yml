@@ -1,5 +1,5 @@
-# AI-assisted (Claude, bf87a5a): workflow written with Claude. Known issue: it fails at
-# "Install dependencies" because requirements.txt pins the Windows-only pywinpty.
+# AI-assisted (Claude, bf87a5a): workflow written with Claude; updated for the
+# src/solaros + data/raw layout in the reorganisation commit.
 name: Notebooks
 
 on:
@@ -25,7 +25,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt   # also installs the local solaros package
+          pip install pytest
+
+      - name: Unit tests (solaros package)
+        run: pytest
 
       # The notebooks embed a kernelspec named "solaros" (the maintainer's
       # local dev kernel), which does not exist on a fresh runner. Register
@@ -36,9 +40,8 @@ jobs:
 
       - name: Extract dataset
         run: |
-          mkdir -p data
-          tar xzf 15minute_data_austin.tar.gz -C data/
-          test -f data/15minute_data_austin/15minute_data_austin.csv
+          tar xzf data/raw/15minute_data_austin.tar.gz -C data/raw/
+          test -f data/raw/15minute_data_austin/15minute_data_austin.csv
 
       - name: Run 01_data_pipeline.ipynb
         run: |
